@@ -169,7 +169,12 @@ export async function registerRoutes(
         throw new Error(`Mapbox Error: ${data.code}`);
       }
 
-      const optimizationOrder = data.trips[0].waypoint_indices;
+      const trips = data.trips;
+      if (!trips || trips.length === 0) {
+        throw new Error("Nenhuma rota encontrada pela API do Mapbox");
+      }
+
+      const optimizationOrder = trips[0].waypoint_indices;
       // optimizationOrder[0] is always 0 (the start point)
       // The rest are indices of the stopsToOptimize array + 1
       
