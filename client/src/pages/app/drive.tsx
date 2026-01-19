@@ -142,6 +142,13 @@ export default function DrivePage() {
               properties: {},
               geometry: geometry
             });
+          } else if (data.trips && data.trips[0] && data.trips[0].geometry) {
+            console.log("[DrivePage] Setting route geometry from trips fallback");
+            setRouteData({
+              type: 'Feature',
+              properties: {},
+              geometry: data.trips[0].geometry
+            });
           } else {
             console.warn("[DrivePage] No geometry returned from optimization. Data keys:", Object.keys(data));
           }
