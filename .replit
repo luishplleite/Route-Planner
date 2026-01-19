@@ -45,3 +45,5 @@ integrations = ["javascript_log_in_with_replit:2.0.0"]
 
 [userenv.shared]
 VITE_MAPBOX_TOKEN = "pk.eyJ1IjoibGhwbCIsImEiOiJjbWN6bHlubGIweWl1MmpvajJjNDZsMTB1In0.VknoAZV_yynQiYi4nR3JjQ"
+VITE_SUPABASE_ANON_KEY = "sb_publishable_b4MnKlatnikuAVdml6dE5g_aaLRMHqZ"
+VITE_SUPABASE_URL = "https://ierpswfvlkrxcqvfepot.supabase.co"
