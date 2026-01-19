@@ -77,18 +77,26 @@ export default function DrivePage() {
   const nextStop = pendingStops[0];
   const otherStops = pendingStops.slice(1);
 
-  // Mock geocoding for demo purposes since we don't have a backend geocoder
-  const handleAddressSubmit = (address: string) => {
-    const lat = viewState.latitude + (Math.random() - 0.5) * 0.02;
-    const lng = viewState.longitude + (Math.random() - 0.5) * 0.02;
-    
-    addStop({
-      addressFull: address, 
-      latitude: lat,
-      longitude: lng,
-      fixedIdentifier: String(stops.length + 1), 
-      notes: "Entrada por voz"
-    });
+  const handleAddressSubmit = (address: string, coordinates?: [number, number]) => {
+    if (coordinates) {
+      addStop({
+        addressFull: address,
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        fixedIdentifier: String(stops.length + 1),
+        notes: "Busca Mapbox"
+      });
+    } else {
+      const lat = viewState.latitude + (Math.random() - 0.5) * 0.02;
+      const lng = viewState.longitude + (Math.random() - 0.5) * 0.02;
+      addStop({
+        addressFull: address,
+        latitude: lat,
+        longitude: lng,
+        fixedIdentifier: String(stops.length + 1),
+        notes: "Entrada manual"
+      });
+    }
   };
 
   const handleOptimize = () => {

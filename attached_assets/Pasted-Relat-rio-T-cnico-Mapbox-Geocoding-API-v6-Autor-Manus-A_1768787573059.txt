@@ -1,0 +1,392 @@
+Relatório Técnico: Mapbox Geocoding
+API v6
+Autor: Manus AI
+Data: 18 de janeiro de 2026
+Versão da API: v6 (mais recente)
+1. Visão Geral
+A Mapbox Geocoding API é um serviço web que converte endereços em coordenadas
+geográficas (latitude, longitude) e vice-versa. É a API fundamental para qualquer
+aplicação que necessite buscar locais, validar endereços ou exibir informações
+geográficas em um mapa.
+Casos de Uso Principais
+Busca de endereços com autocompletar
+Validação e normalização de endereços
+Conversão de endereços em coordenadas (forward geocoding)
+Conversão de coordenadas em endereços (reverse geocoding)
+Busca de pontos de interesse (POIs)
+Processamento em lote de múltiplos endereços
+Integração com sistemas de logística e entrega
+2. Endpoint Base e Autenticação
+URL Base
+https://api.mapbox.com/search/geocode/v6/
+Autenticação
+Todas as requisições requerem um token de acesso do Mapbox como parâmetro de
+query:
+?access_token=YOUR_MAPBOX_ACCESS_TOKEN
+Tipos de Token:
+Public Token: Usado em aplicações web e mobile (com restrições de domínio)
+Private Token: Usado em servidores backend (nunca expor em código frontend)
+Session Token: Usado para rastrear sessões de usuário
+3. Operações Principais
+3.1 Forward Geocoding
+Converte um endereço em texto para coordenadas geográficas.
+Endpoint:
+GET https://api.mapbox.com/search/geocode/v6/forward
+Parâmetros de Query:
+Parâmetro Tipo Obrigatório Descrição
+q string Sim Texto do endereço a buscar
+access_token string Sim Token de autenticação
+limit integer Não
+Número máximo de resultados (padrão: 5,
+máximo: 10)
+proximity string Não
+Coordenadas para priorizar resultados próximos
+(lon,lat)
+country string Não Código ISO 3166 do país (ex: “br” para Brasil)
+language string Não Idioma dos resultados (ex: “pt” para português)
+types string Não Filtrar por tipo (address, place, region, country)
+bbox string Não Caixa delimitadora (minX,minY,maxX,maxY)
+session_token string Não Token de sessão para rastreamento
+Exemplo de Requisição:
+curl -X GET \
+'https://api.mapbox.com/search/geocode/v6/forward?
+q=Avenida%20Paulista%2C%20São%20Paulo&limit=5&country=br&access_token=YOUR_TOK
+Resposta (JSON):
+{
+"type": "FeatureCollection",
+"query": ["avenida", "paulista", "são", "paulo"],
+"features": [
+{
+"id": "address.1234567890",
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [-46.6561, -23.5505]
+},
+"properties": {
+"name": "Avenida Paulista",
+"address": "Avenida Paulista",
+"place_name": "Avenida Paulista, São Paulo, 01311-100, Brasil",
+"short_code": "br-sp",
+"wikidata": "Q1234567"
+},
+"place_name": "Avenida Paulista, São Paulo, 01311-100, Brasil",
+"bbox": [-46.6700, -23.5600, -46.6400, -23.5400],
+"center": [-46.6561, -23.5505],
+"place_type": ["address"],
+"relevance": 0.99,
+"text": "Avenida Paulista"
+}
+],
+"attribution": "© Mapbox"
+}
+3.2 Reverse Geocoding
+Converte coordenadas geográficas em um endereço legível.
+Endpoint:
+GET https://api.mapbox.com/search/geocode/v6/reverse
+Parâmetros de Query:
+Parâmetro Tipo Obrigatório Descrição
+longitude number Sim Longitude do ponto
+latitude number Sim Latitude do ponto
+access_token string Sim Token de autenticação
+limit integer Não Número máximo de resultados (padrão: 1)
+language string Não Idioma dos resultados
+types string Não Filtrar por tipo
+Exemplo de Requisição:
+curl -X GET \
+'https://api.mapbox.com/search/geocode/v6/reverse?
+longitude=-46.6561&latitude=-23.5505&access_token=YOUR_TOKEN'
+Resposta (JSON):
+{
+"type": "FeatureCollection",
+"query": [-46.6561, -23.5505],
+"features": [
+{
+"id": "address.1234567890",
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [-46.6561, -23.5505]
+},
+"properties": {
+"name": "Avenida Paulista",
+"address": "Avenida Paulista, 1000",
+"place_name": "Avenida Paulista, 1000, São Paulo, 01311-100, Brasil"
+},
+"place_name": "Avenida Paulista, 1000, São Paulo, 01311-100, Brasil",
+"place_type": ["address"],
+"relevance": 1.0,
+"text": "Avenida Paulista"
+}
+]
+}
+4. Funcionalidades Avançadas
+4.1 Batch Geocoding
+Processa múltiplos endereços em uma única requisição.
+Endpoint:
+POST https://api.mapbox.com/search/geocode/v6/batch
+Limite: Até 1.000 endereços por requisição
+Corpo da Requisição (JSON):
+{
+"items": [
+{
+"q": "Avenida Paulista, São Paulo"
+},
+{
+"q": "Copacabana, Rio de Janeiro"
+},
+{
+"q": "Pátio da Alfândega, Salvador"
+}
+]
+}
+Vantagens:
+Reduz número de requisições HTTP
+Mais eficiente para processar muitos endereços
+Ideal para importação de dados em lote
+4.2 Structured Input
+Permite buscar por componentes estruturados do endereço.
+Parâmetros:
+GET https://api.mapbox.com/search/geocode/v6/forward?
+address_line1=Avenida+Paulista,+1000&
+city=São+Paulo&
+country=br&
+access_token=YOUR_TOKEN
+Componentes Disponíveis:
+address_line1 : Endereço (rua, número)
+address_line2 : Complemento
+city : Cidade
+region : Estado/Região
+postcode : CEP
+country : País
+4.3 Filtros de Tipo
+Limita resultados a tipos específicos de locais.
+Tipos Disponíveis:
+Tipo Descrição Exemplo
+address Endereços específicos Rua, número
+place Locais nomeados Parques, edifícios
+region Regiões administrativas Estados, províncias
+country Países Brasil, Argentina
+postcode Códigos postais CEP
+Exemplo:
+GET https://api.mapbox.com/search/geocode/v6/forward?
+q=São+Paulo&
+types=place&
+access_token=YOUR_TOKEN
+5. Resposta da API
+Estrutura de Resposta
+{
+"type": "FeatureCollection",
+"query": ["termo", "busca"],
+"features": [
+{
+"id": "unique_identifier",
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [longitude, latitude]
+},
+"properties": {
+"name": "Nome do local",
+"address": "Endereço completo",
+"place_name": "Endereço formatado",
+"wikidata": "Q123456",
+"short_code": "br-sp"
+},
+"place_name": "Endereço formatado completo",
+"place_type": ["address"],
+"relevance": 0.99,
+"text": "Termo principal"
+}
+],
+"attribution": "© Mapbox"
+}
+Campos Importantes
+Campo Descrição
+id Identificador único do resultado
+geometry.coordinates Array [longitude, latitude]
+place_name Endereço completo formatado
+properties Metadados adicionais
+relevance Score de relevância (0-1)
+place_type Tipo de local encontrado
+bbox Caixa delimitadora [minX, minY, maxX, maxY]
+6. Limites e Taxas
+Rate Limits
+Plano Requisições/Minuto Requisições/Mês
+Free 1.000 100.000
+Pay-as-you-go 1.000 Ilimitado
+Enterprise Customizado Customizado
+Preços (Pay-as-you-go)
+Primeiras 100.000 requisições/mês: Gratuito
+Requisições adicionais: $0,50 por 1.000 requisições
+Limites Técnicos
+Comprimento máximo da query: 256 caracteres
+Resultados máximos por requisição: 10
+Itens máximos em batch: 1.000
+Timeout: 30 segundos
+7. Tratamento de Erros
+Códigos de Status HTTP
+Código Significado Descrição
+200 OK Requisição bem-sucedida
+400 Bad Request Parâmetros inválidos
+401 Unauthorized Token inválido ou ausente
+403 Forbidden Token sem permissão
+404 Not Found Recurso não encontrado
+429 Too Many Requests Rate limit excedido
+500 Server Error Erro no servidor Mapbox
+Resposta de Erro
+{
+"message": "Not Authorized - No Token",
+"code": "UNAUTHORIZED"
+}
+8. Implementação em JavaScript/React
+Exemplo Básico
+async function searchAddress(query) {
+const token = 'YOUR_MAPBOX_TOKEN';
+const url = `https://api.mapbox.com/search/geocode/v6/forward?
+q=${encodeURIComponent(query)}&limit=5&access_token=${token}`;
+try {
+const response = await fetch(url);
+const data = await response.json();
+return data.features.map(feature => ({
+id: feature.id,
+name: feature.properties.name,
+address: feature.place_name,
+coordinates: feature.geometry.coordinates
+}));
+} catch (error) {
+console.error('Erro ao buscar endereço:', error);
+return [];
+}
+}
+Exemplo com Debounce (Recomendado)
+import { useRef, useState } from 'react';
+function AddressSearch() {
+const [query, setQuery] = useState('');
+const [suggestions, setSuggestions] = useState([]);
+const debounceTimer = useRef(null);
+const handleSearch = async (searchQuery) => {
+if (!searchQuery.trim()) {
+setSuggestions([]);
+return;
+}
+const token = 'YOUR_MAPBOX_TOKEN';
+const url = `https://api.mapbox.com/search/geocode/v6/forward?
+q=${encodeURIComponent(searchQuery)}&limit=5&access_token=${token}`;
+try {
+const response = await fetch(url);
+const data = await response.json();
+setSuggestions(data.features || []);
+} catch (error) {
+console.error('Erro:', error);
+}
+};
+const handleInputChange = (e) => {
+const value = e.target.value;
+setQuery(value);
+// Limpar timer anterior
+if (debounceTimer.current) {
+clearTimeout(debounceTimer.current);
+}
+// Definir novo timer (300ms de delay)
+debounceTimer.current = setTimeout(() => {
+handleSearch(value);
+}, 300);
+};
+return (
+<div>
+<input
+type="text"
+placeholder="Digite um endereço..."
+value={query}
+onChange={handleInputChange}
+/>
+<ul>
+{suggestions.map((suggestion) => (
+<li key={suggestion.id}>
+{suggestion.place_name}
+</li>
+))}
+</ul>
+</div>
+);
+}
+9. Boas Práticas
+1. Use Debounce para Autocompletar
+Implemente um delay (300-500ms) entre digitações para reduzir requisições
+desnecessárias.
+2. Implemente Limites de Resultados
+Use limit=5 ou limit=10 para retornar apenas os resultados mais relevantes.
+3. Filtrar por País/Região
+Use o parâmetro country para focar em resultados locais.
+const url = `https://api.mapbox.com/search/geocode/v6/forward?
+q=${query}&country=br&access_token=${token}`;
+4. Cache de Resultados
+Armazene resultados em cache para evitar requisições repetidas.
+const cache = new Map();
+async function searchWithCache(query) {
+if (cache.has(query)) {
+return cache.get(query);
+}
+const results = await searchAddress(query);
+cache.set(query, results);
+return results;
+}
+5. Tratamento de Erros
+Sempre implemente tratamento de erros e feedback ao usuário.
+try {
+const results = await searchAddress(query);
+if (results.length === 0) {
+showMessage('Nenhum endereço encontrado');
+}
+} catch (error) {
+showError('Erro ao buscar endereço. Tente novamente.');
+}
+6. Use Session Token
+Para rastrear sessões de usuário e melhorar a relevância dos resultados.
+const sessionToken = generateUUID();
+const url = `https://api.mapbox.com/search/geocode/v6/forward?
+q=${query}&session_token=${sessionToken}&access_token=${token}`;
+10. Casos de Uso Práticos
+Sistema de Entrega
+// 1. Usuário digita endereço de entrega
+const deliveryAddress = await geocodeAddress("Rua das Flores, 123");
+// 2. Validar se está na área de cobertura
+const isInCoverage = checkCoverageArea(deliveryAddress.coordinates);
+// 3. Calcular tempo de entrega
+const deliveryTime = calculateDeliveryTime(deliveryAddress.coordinates);
+Aplicativo de Táxi
+// 1. Buscar localização atual (reverse geocoding)
+const currentLocation = await reverseGeocode(userLat, userLng);
+// 2. Buscar destino (forward geocoding)
+const destination = await geocodeAddress(userInput);
+// 3. Calcular rota
+const route = await calculateRoute(currentLocation, destination);
+Importação de Dados em Lote
+// 1. Preparar lista de endereços
+const addresses = [
+{ q: "Endereço 1" },
+{ q: "Endereço 2" },
+{ q: "Endereço 3" }
+];
+// 2. Enviar batch
+const results = await batchGeocode(addresses);
+// 3. Processar resultados
+results.forEach((result, index) => {
+console.log(`${addresses[index].q} -> ${result.place_name}`);
+});
+11. Conclusão
+A Mapbox Geocoding API v6 é uma ferramenta poderosa e flexível para qualquer
+aplicação que necessite buscar, validar ou trabalhar com endereços geográficos. Com
+suporte a múltiplos idiomas, filtros avançados e processamento em lote, ela oferece a
+base necessária para construir sistemas de localização robustos e eficientes.
+A implementação do autocompletar com debounce, combinada com bom tratamento
+de erros e cache, garante uma experiência de usuário fluida e responsiva.
+12. Referências
+Mapbox Geocoding API Documentation
+Mapbox API Guides
+Mapbox Pricing
+Mapbox Status Page
+Documento preparado por: Manus AI
+Última atualização: 18 de janeiro de 2026
+Versão: 1.0
