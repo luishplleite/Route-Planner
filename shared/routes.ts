@@ -83,7 +83,10 @@ export const api = {
         currentLongitude: z.number(),
       }),
       responses: {
-        200: z.array(z.custom<typeof stops.$inferSelect>()),
+        200: z.object({
+          stops: z.array(z.custom<typeof stops.$inferSelect>()),
+          geometry: z.any().optional()
+        }),
         404: errorSchemas.notFound,
       },
     },

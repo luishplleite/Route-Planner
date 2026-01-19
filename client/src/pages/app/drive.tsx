@@ -122,24 +122,28 @@ export default function DrivePage() {
   const confirmOptimize = () => {
     if (!userLocation) return;
     console.log("[DrivePage] Optimizing with location:", userLocation);
+    
+    // Register current location as a log point or similar if needed
+    // For now, optimization uses it as starting point.
+    
     optimize(
       { currentLatitude: userLocation.lat, currentLongitude: userLocation.lng },
       {
         onSuccess: (data: any) => {
           console.log("[DrivePage] Optimization success data:", data);
           
-          // Geometry can be at data.geometry or inside the first trip
-          const geometry = data.geometry || (data.trips && data.trips[0] && data.trips[0].geometry);
+          // data now has { stops, geometry } according to new route schema
+          const geometry = data.geometry;
           
           if (geometry) {
-            console.log("[DrivePage] Setting route geometry");
+            console.log("[DrivePage] Setting route geometry:", geometry);
             setRouteData({
               type: 'Feature',
               properties: {},
               geometry: geometry
             });
           } else {
-            console.warn("[DrivePage] No geometry returned from optimization. Data:", data);
+            console.warn("[DrivePage] No geometry returned from optimization. Data keys:", Object.keys(data));
           }
           toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
         },
