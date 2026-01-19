@@ -121,18 +121,26 @@ export default function DrivePage() {
 
   const confirmOptimize = () => {
     if (!userLocation) return;
+    console.log("[DrivePage] Optimizing with location:", userLocation);
     optimize(
       { currentLatitude: userLocation.lat, currentLongitude: userLocation.lng },
       {
         onSuccess: (data: any) => {
+          console.log("[DrivePage] Optimization success data:", data);
           if (data.geometry) {
             setRouteData({
               type: 'Feature',
               properties: {},
               geometry: data.geometry
             });
+          } else {
+            console.warn("[DrivePage] No geometry returned from optimization");
           }
           toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
+        },
+        onError: (error: any) => {
+          console.error("[DrivePage] Optimization error:", error);
+          toast({ title: "Erro na Otimização", description: error.message || "Ocorreu um erro ao otimizar a rota.", variant: "destructive" });
         }
       }
     );

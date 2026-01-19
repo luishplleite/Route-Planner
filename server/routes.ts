@@ -162,19 +162,25 @@ export async function registerRoutes(
 
       const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving-traffic/${coordinates}?overview=full&geometries=geojson&access_token=${token}`;
       
+      console.log(`[Optimization] Calling Mapbox API: ${url.replace(token, 'REDACTED')}`);
+      
       const response = await fetch(url);
       const data = await response.json();
 
+      console.log(`[Optimization] Mapbox Response Code: ${data.code}`);
       if (data.code !== 'Ok') {
+        console.error(`[Optimization] Mapbox Error Detail: ${JSON.stringify(data)}`);
         throw new Error(`Mapbox Error: ${data.code}`);
       }
 
       const trips = data.trips;
       if (!trips || trips.length === 0) {
+        console.error(`[Optimization] No trips in response: ${JSON.stringify(data)}`);
         throw new Error("Nenhuma rota encontrada pela API do Mapbox");
       }
 
       const optimizationOrder = trips[0].waypoint_indices;
+      console.log(`[Optimization] Optimization Order: ${optimizationOrder}`);
       // optimizationOrder[0] is always 0 (the start point)
       // The rest are indices of the stopsToOptimize array + 1
       
