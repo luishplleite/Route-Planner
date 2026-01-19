@@ -1,7 +1,8 @@
 import { LayoutShell } from "@/components/layout-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFinanceSummary } from "@/hooks/use-itineraries";
-import { startOfMonth, endOfMonth, format, subMonths } from "date-fns";
+import { startOfMonth, endOfMonth, format, subMonths, addMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { DollarSign, TrendingUp, Package, Calendar } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Loader2 } from "lucide-react";
@@ -23,7 +24,7 @@ export default function FinancePage() {
   })) || [];
 
   const previousMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const nextMonth = () => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)));
+  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
   if (isLoading) {
     return (
@@ -39,11 +40,11 @@ export default function FinancePage() {
     <LayoutShell>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-display font-bold">Financial Summary</h1>
+          <h1 className="text-2xl font-display font-bold">Resumo Financeiro</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={previousMonth}>&lt;</Button>
-            <span className="font-medium min-w-[100px] text-center">{format(currentDate, 'MMMM yyyy')}</span>
-            <Button variant="outline" size="icon" onClick={nextMonth} disabled={currentDate.getMonth() === new Date().getMonth()}>&gt;</Button>
+            <span className="font-medium min-w-[120px] text-center capitalize">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</span>
+            <Button variant="outline" size="icon" onClick={nextMonth} disabled={currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear()}>&gt;</Button>
           </div>
         </div>
 
@@ -53,9 +54,9 @@ export default function FinancePage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-800">Total Earnings</p>
+                  <p className="text-sm font-medium text-green-800">Ganhos Totais</p>
                   <h3 className="text-3xl font-display font-bold text-green-900 mt-2">
-                    R$ {summary?.totalEarnings.toFixed(2) || "0.00"}
+                    R$ {summary?.totalEarnings.toFixed(2) || "0,00"}
                   </h3>
                 </div>
                 <div className="h-12 w-12 bg-green-200 rounded-full flex items-center justify-center text-green-700">
@@ -69,7 +70,7 @@ export default function FinancePage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Deliveries Completed</p>
+                  <p className="text-sm font-medium text-muted-foreground">Entregas Concluídas</p>
                   <h3 className="text-3xl font-display font-bold text-foreground mt-2">
                     {summary?.totalDeliveries || 0}
                   </h3>
@@ -89,10 +90,10 @@ export default function FinancePage() {
                <TrendingUp className="w-5 h-5 text-blue-600" />
              </div>
              <div>
-               <h4 className="font-semibold text-sm">Earnings Rules</h4>
+               <h4 className="font-semibold text-sm">Regras de Ganhos</h4>
                <p className="text-xs text-muted-foreground mt-1">
-                 • R$ 2.80 per delivery <br/>
-                 • +R$ 100.00 bonus on Sundays (if &gt; 50 deliveries)
+                 • R$ 2,80 por entrega <br/>
+                 • +R$ 100,00 bônus aos domingos (se &gt; 50 entregas)
                </p>
              </div>
            </CardContent>
@@ -101,7 +102,7 @@ export default function FinancePage() {
         {/* Chart */}
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg">Daily Performance</CardTitle>
+            <CardTitle className="text-lg">Desempenho Diário</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[250px] w-full">
@@ -130,7 +131,7 @@ export default function FinancePage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data available for this period.
+                  Nenhum dado disponível para este período.
                 </div>
               )}
             </div>

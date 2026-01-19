@@ -24,6 +24,13 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
     failed: "bg-red-100 text-red-800 border-red-200",
   };
 
+  const statusLabels = {
+    pending: "Pendente",
+    current: "Atual",
+    delivered: "Entregue",
+    failed: "Falhou",
+  };
+
   const handleNavigate = () => {
     // Open Waze or Google Maps (mobile only generally works best with this protocol)
     const url = `https://www.google.com/maps/dir/?api=1&destination=${stop.latitude},${stop.longitude}`;
@@ -38,7 +45,7 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
     )}>
       {isNext && (
         <div className="bg-primary text-white text-xs font-bold uppercase tracking-wider py-1 px-3 absolute top-0 right-0 rounded-bl-lg z-10">
-          Next Stop
+          Próxima Parada
         </div>
       )}
       
@@ -66,7 +73,7 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
               )}
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="outline" className={cn("capitalize font-medium", statusColors[stop.status as keyof typeof statusColors])}>
-                  {stop.status}
+                  {statusLabels[stop.status as keyof typeof statusLabels]}
                 </Badge>
                 {stop.deliveryTime && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -86,7 +93,7 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
                 className="flex flex-col items-center justify-center py-3 px-2 hover:bg-muted/50 active:bg-muted transition-colors group"
               >
                 <Navigation className="h-5 w-5 text-blue-600 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-semibold text-blue-700">NAVIGATE</span>
+                <span className="text-xs font-semibold text-blue-700 uppercase">Navegar</span>
               </button>
               
               <button
@@ -94,7 +101,7 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
                 className="flex flex-col items-center justify-center py-3 px-2 hover:bg-red-50 active:bg-red-100 transition-colors group"
               >
                 <X className="h-5 w-5 text-red-600 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-semibold text-red-700">FAILED</span>
+                <span className="text-xs font-semibold text-red-700 uppercase">Falhou</span>
               </button>
 
               <button
@@ -102,7 +109,7 @@ export function StopCard({ stop, onUpdateStatus, isNext = false }: StopCardProps
                 className="flex flex-col items-center justify-center py-3 px-2 hover:bg-green-50 active:bg-green-100 transition-colors group"
               >
                 <Check className="h-5 w-5 text-green-600 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-semibold text-green-700">DELIVERED</span>
+                <span className="text-xs font-semibold text-green-700 uppercase">Entregue</span>
               </button>
             </div>
           )}

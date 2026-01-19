@@ -7,18 +7,18 @@ export default function Landing() {
   const features = [
     {
       icon: Navigation,
-      title: "Smart Routing",
-      desc: "Optimized routes to save fuel and time.",
+      title: "Roteirização Inteligente",
+      desc: "Rotas otimizadas para economizar combustível e tempo.",
     },
     {
       icon: Clock,
-      title: "Real-time Updates",
-      desc: "Track every delivery status instantly.",
+      title: "Atualizações em Tempo Real",
+      desc: "Acompanhe o status de cada entrega instantaneamente.",
     },
     {
       icon: TrendingUp,
-      title: "Earnings Tracker",
-      desc: "Visualize your daily income and bonuses.",
+      title: "Rastreador de Ganhos",
+      desc: "Visualize sua renda diária e bônus.",
     }
   ];
 
@@ -29,24 +29,24 @@ export default function Landing() {
         <div className="max-w-xl space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium">
             <ShieldCheck className="w-4 h-4" />
-            <span>Trusted by autonomous drivers</span>
+            <span>Confiado por entregadores autônomos</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight text-foreground leading-[1.1]">
-            Deliver Faster,<br />
-            <span className="text-primary">Earn More.</span>
+            Entregue mais rápido,<br />
+            <span className="text-primary">Ganhe mais.</span>
           </h1>
           
           <p className="text-lg text-muted-foreground md:text-xl leading-relaxed">
-            The all-in-one route planner and financial assistant for professional delivery drivers. Optimize your stops, track your cash.
+            O planejador de rotas e assistente financeiro completo para entregadores profissionais. Otimize suas paradas, controle seu dinheiro.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
             <Button size="lg" className="h-14 text-lg font-semibold px-8 w-full sm:w-auto shadow-xl shadow-primary/20" asChild>
-              <a href="/api/login">Start Driving Now</a>
+              <a href="/api/login">Começar a Dirigir Agora</a>
             </Button>
             <Button size="lg" variant="outline" className="h-14 text-lg px-8 w-full sm:w-auto" asChild>
-              <a href="#features">Learn More</a>
+              <a href="#features">Saiba Mais</a>
             </Button>
           </div>
         </div>
@@ -54,11 +54,9 @@ export default function Landing() {
         {/* Hero Visual */}
         <div className="mt-12 lg:mt-0 relative w-full max-w-md lg:max-w-lg aspect-square">
           <div className="absolute inset-0 bg-gradient-to-tr from-blue-100 to-transparent rounded-full blur-3xl opacity-60" />
-          {/* Unsplash abstract map/delivery image */}
-          {/* delivery map navigation abstract */}
           <img 
             src="https://images.unsplash.com/photo-1596524430615-b46475ddff6e?q=80&w=2070&auto=format&fit=crop" 
-            alt="Delivery Map"
+            alt="Mapa de Entrega"
             className="relative z-10 rounded-3xl shadow-2xl border-4 border-white rotate-3 hover:rotate-0 transition-transform duration-500 object-cover h-full w-full"
           />
         </div>
@@ -82,7 +80,7 @@ export default function Landing() {
       </div>
       
       <footer className="py-8 text-center text-sm text-muted-foreground">
-        © 2024 RotaCerta. Built for Speed.
+        © 2024 RotaCerta. Feito para Velocidade.
       </footer>
     </div>
   );

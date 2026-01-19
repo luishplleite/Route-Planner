@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarIcon, Map, Plus, ChevronRight, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Link, useLocation } from "wouter";
 import { LayoutShell } from "@/components/layout-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -39,8 +40,8 @@ export default function PlanPage() {
       <div className="space-y-8">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-display font-bold">Hello, {user?.firstName || 'Driver'}</h1>
-          <p className="text-muted-foreground">Ready for today's route?</p>
+          <h1 className="text-3xl font-display font-bold">Olá, {user?.firstName || 'Entregador'}</h1>
+          <p className="text-muted-foreground">Pronto para a rota de hoje?</p>
         </div>
 
         {/* Active Route Card */}
@@ -49,16 +50,16 @@ export default function PlanPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-primary">
                 <Map className="w-5 h-5" />
-                Active Route
+                Rota Ativa
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-6">
-                <p className="text-2xl font-bold font-display">{format(new Date(activeItinerary.date), "MMMM d, yyyy")}</p>
-                <p className="text-sm text-muted-foreground">Status: <span className="font-medium text-foreground uppercase">{activeItinerary.status}</span></p>
+                <p className="text-2xl font-bold font-display">{format(new Date(activeItinerary.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+                <p className="text-sm text-muted-foreground">Status: <span className="font-medium text-foreground uppercase">{activeItinerary.status === 'active' ? 'Ativa' : 'Concluída'}</span></p>
               </div>
               <Button onClick={handleResume} size="lg" className="w-full h-12 text-lg font-bold shadow-lg shadow-primary/20">
-                Resume Drive <ChevronRight className="ml-2 w-5 h-5" />
+                Continuar Percurso <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
             </CardContent>
           </Card>
@@ -68,10 +69,10 @@ export default function PlanPage() {
               <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
                 <CalendarIcon className="w-8 h-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No active route today</h3>
-              <p className="text-muted-foreground mb-6 max-w-xs">Start a new itinerary to begin adding stops and tracking earnings.</p>
+              <h3 className="text-lg font-semibold mb-2">Nenhuma rota ativa hoje</h3>
+              <p className="text-muted-foreground mb-6 max-w-xs">Inicie um novo itinerário para começar a adicionar paradas e acompanhar ganhos.</p>
               <Button onClick={handleCreate} disabled={isCreating} size="lg" className="w-full sm:w-auto px-8 h-12">
-                {isCreating ? <Loader2 className="animate-spin" /> : <><Plus className="mr-2 w-5 h-5" /> Start New Day</>}
+                {isCreating ? <Loader2 className="animate-spin" /> : <><Plus className="mr-2 w-5 h-5" /> Começar Novo Dia</>}
               </Button>
             </CardContent>
           </Card>
@@ -79,27 +80,27 @@ export default function PlanPage() {
 
         {/* History List */}
         <div>
-          <h2 className="text-xl font-bold mb-4 font-display">Recent History</h2>
+          <h2 className="text-xl font-bold mb-4 font-display">Histórico Recente</h2>
           <div className="space-y-3">
             {itineraries && itineraries.length > 0 ? (
               itineraries.map((itinerary) => (
                 <div key={itinerary.id} className="group bg-card border rounded-lg p-4 flex items-center justify-between hover:border-primary/50 transition-colors shadow-sm">
                   <div>
-                    <p className="font-semibold">{format(new Date(itinerary.date), "EEE, MMM d")}</p>
+                    <p className="font-semibold">{format(new Date(itinerary.date), "EEE, d 'de' MMM", { locale: ptBR })}</p>
                     <p className="text-sm text-muted-foreground">
-                      Earnings: <span className="text-green-600 font-medium">R$ {itinerary.totalEarnings}</span>
+                      Ganhos: <span className="text-green-600 font-medium">R$ {itinerary.totalEarnings}</span>
                     </p>
                   </div>
                   <div className="flex items-center text-muted-foreground text-sm gap-2">
                     <span className={itinerary.status === 'completed' ? 'text-green-600' : 'text-blue-600'}>
-                      {itinerary.status === 'completed' ? 'Done' : 'Active'}
+                      {itinerary.status === 'completed' ? 'Concluído' : 'Ativo'}
                     </span>
                     <ChevronRight className="w-4 h-4 text-border group-hover:text-foreground" />
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground text-center py-8 bg-muted/20 rounded-lg">No past itineraries found.</p>
+              <p className="text-muted-foreground text-center py-8 bg-muted/20 rounded-lg">Nenhum itinerário anterior encontrado.</p>
             )}
           </div>
         </div>

@@ -49,7 +49,7 @@ export default function DrivePage() {
       <LayoutShell>
         <div className="h-[80vh] flex flex-col items-center justify-center gap-4 text-muted-foreground">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p>Loading your route...</p>
+          <p>Carregando sua rota...</p>
         </div>
       </LayoutShell>
     );
@@ -62,10 +62,10 @@ export default function DrivePage() {
           <div className="h-20 w-20 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
             <AlertTriangle className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-bold">No Active Route</h2>
-          <p className="text-muted-foreground max-w-xs">You need to start a route in the Plan tab before you can drive.</p>
+          <h2 className="text-2xl font-bold">Nenhuma Rota Ativa</h2>
+          <p className="text-muted-foreground max-w-xs">Você precisa iniciar uma rota na aba Planejar antes de poder dirigir.</p>
           <Button asChild className="mt-4">
-            <a href="/app/plan">Go to Plan</a>
+            <a href="/app/plan">Ir para Planejar</a>
           </Button>
         </div>
       </LayoutShell>
@@ -79,23 +79,21 @@ export default function DrivePage() {
 
   // Mock geocoding for demo purposes since we don't have a backend geocoder
   const handleAddressSubmit = (address: string) => {
-    // In a real app, backend would geocode. Here we simulate it near the user or map center.
-    // We'll add some random offset to simulate different locations.
     const lat = viewState.latitude + (Math.random() - 0.5) * 0.02;
     const lng = viewState.longitude + (Math.random() - 0.5) * 0.02;
     
     addStop({
-      addressFull: address, // In real app, this would come from geocoding result
+      addressFull: address, 
       latitude: lat,
       longitude: lng,
-      fixedIdentifier: String(stops.length + 1), // Simple auto-increment
-      notes: "Voice entry"
+      fixedIdentifier: String(stops.length + 1), 
+      notes: "Entrada por voz"
     });
   };
 
   const handleOptimize = () => {
     if (!userLocation) {
-      toast({ title: "Location required", description: "Please enable location to optimize route from your current position.", variant: "destructive" });
+      toast({ title: "Localização necessária", description: "Por favor, habilite a localização para otimizar a rota a partir da sua posição atual.", variant: "destructive" });
       return;
     }
     optimize({ currentLatitude: userLocation.lat, currentLongitude: userLocation.lng });
@@ -134,7 +132,7 @@ export default function DrivePage() {
             </ReactMapGL>
           ) : (
             <div className="flex items-center justify-center h-full bg-slate-100 text-slate-400">
-              <p className="flex items-center gap-2"><MapPin /> Mapbox Token Missing</p>
+              <p className="flex items-center gap-2"><MapPin /> Token do Mapbox Ausente</p>
             </div>
           )}
           
@@ -144,20 +142,20 @@ export default function DrivePage() {
             onClick={handleOptimize}
             disabled={isOptimizing}
           >
-            {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Route className="w-4 h-4 mr-2" /> Optimize</>}
+            {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Route className="w-4 h-4 mr-2" /> Otimizar</>}
           </Button>
         </div>
 
         {/* Input Section */}
         <div className="space-y-2">
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Add New Stop</h3>
+          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Adicionar Parada</h3>
           <VoiceAddressInput onAddressSubmit={handleAddressSubmit} disabled={isAdding} />
         </div>
 
         {/* Next Stop Highlight */}
         {nextStop && (
           <div className="space-y-2 animate-in slide-in-from-bottom-4 duration-500">
-             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground text-primary">Up Next</h3>
+             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground text-primary">Próxima Parada</h3>
              <StopCard 
                stop={nextStop} 
                onUpdateStatus={(id, status) => updateStatus({ id, status, itineraryId: itinerary!.id })} 
@@ -168,7 +166,7 @@ export default function DrivePage() {
 
         {/* Remaining List */}
         <div className="space-y-3 pb-10">
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Queue ({otherStops.length})</h3>
+          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Fila ({otherStops.length})</h3>
           {otherStops.length > 0 ? (
             otherStops.map(stop => (
               <StopCard 
@@ -178,7 +176,7 @@ export default function DrivePage() {
               />
             ))
           ) : (
-            <p className="text-sm text-muted-foreground italic">No other pending stops.</p>
+            <p className="text-sm text-muted-foreground italic">Nenhuma outra parada pendente.</p>
           )}
         </div>
       </div>

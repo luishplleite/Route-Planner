@@ -11,9 +11,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
   const navItems = [
-    { href: "/app/plan", label: "Plan", icon: Calendar },
-    { href: "/app/drive", label: "Drive", icon: Navigation },
-    { href: "/app/finance", label: "Finance", icon: DollarSign },
+    { href: "/app/plan", label: "Planejar", icon: Calendar },
+    { href: "/app/drive", label: "Dirigir", icon: Navigation },
+    { href: "/app/finance", label: "Financeiro", icon: DollarSign },
   ];
 
   return (
@@ -40,13 +40,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                   <div className="flex items-center gap-4 mb-8 px-2">
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary">
                       {user?.profileImageUrl ? (
-                        <img src={user.profileImageUrl} alt="User" className="h-full w-full rounded-full object-cover" />
+                        <img src={user.profileImageUrl} alt="Usuário" className="h-full w-full rounded-full object-cover" />
                       ) : (
                         <User className="h-6 w-6 text-primary" />
                       )}
                     </div>
                     <div>
-                      <p className="font-bold text-lg">{user?.firstName || 'Driver'}</p>
+                      <p className="font-bold text-lg">{user?.firstName || 'Entregador'}</p>
                       <p className="text-sm text-muted-foreground truncate max-w-[180px]">{user?.email}</p>
                     </div>
                   </div>
@@ -75,7 +75,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
                     }}
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign Out
+                    Sair
                   </Button>
                 </div>
               </SheetContent>
