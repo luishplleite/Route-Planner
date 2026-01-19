@@ -1,0 +1,343 @@
+masterplan.md
+Markdown
+
+# Masterplan: RotaCerta
+
+## 1. Visão Geral do Projeto
+O **RotaCerta** é um aplicativo Web (PWA) de logística e gestão financeira focado em entregadores autônomos no Brasil. O objetivo é replicar a eficiência de roteirização do "Circuit", eliminando a necessidade de leitura de código de barras e introduzindo um controle financeiro robusto integrado ao status das entregas.
+
+**Missão:** Simplificar a vida do entregador, otimizando seu tempo na rua e garantindo transparência total sobre seus ganhos diários.
+
+## 2. Público-Alvo
+* **Persona Principal:** Entregadores autônomos (Last Mile) que utilizam veículo próprio ou agregado.
+* **Dores:** Perda de tempo planejando rotas manualmente, dificuldade em controlar ganhos variáveis, digitação lenta de endereços.
+
+## 3. Principais Funcionalidades
+* **Entrada Híbrida:** Digitação inteligente com autocomplete ou Entrada por Voz (Speech-to-Text nativo).
+* **Otimização Inteligente (TSP):** Algoritmo Mapbox para organizar paradas da maneira mais eficiente.
+* **Identificação Fixa:** Cada pacote recebe um número fixo (1, 2, 3...) que persiste mesmo após reordenar a rota.
+* **Gestão Visual de Status:** Marcadores coloridos no mapa indicando o estado atual da entrega.
+* **Módulo Financeiro:** Cálculo automático (R$ 2,80/entrega) + Regras de bonificação de Domingo.
+* **Relatórios:** Dashboard em tempo real e exportação de PDF quinzenal.
+
+## 4. Stack Tecnológica
+* **Frontend:** React 19, Tailwind CSS 4, TypeScript, Shadcn/ui.
+* **Backend:** Node.js (Express) hospedado na Qnax, tRPC v11.
+* **Database & Auth:** Supabase (PostgreSQL).
+* **Mapas & Geo:** Mapbox GL JS, Geocoding API v6, Optimization API v1, Directions API v5.
+* **State Management:** Zustand + TanStack Query.
+
+## 5. Modelo de Negócio (Lógica Interna)
+* O app é uma ferramenta de produtividade.
+* **Cálculo de Ganhos:**
+    * Base: R$ 2,80 por entrega com status "Entregue".
+    * Bônus: Se (Dia == Domingo) E (Entregas > 50) → +R$ 100,00.
+
+## 6. Segurança e Privacidade
+* Dados de localização processados via HTTPS.
+* Autenticação via Supabase Auth.
+* Dados sensíveis de rota armazenados apenas pelo tempo necessário (ou histórico do usuário).
+implementation-plan.md
+Markdown
+
+# Plano de Implementação: RotaCerta
+
+Este documento detalha a execução técnica, incluindo schemas de banco de dados e componentes críticos solicitados.
+
+## Fase 1: Configuração do Ambiente
+1.  **Repo Setup:** Monorepo ou estrutura Frontend/Backend separada.
+2.  **Frontend:** Vite + React 19 + Tailwind 4 + Shadcn/ui init.
+3.  **Backend:** Express server setup com tRPC. Hospedagem na Qnax.
+4.  **Supabase:** Criação do projeto e configuração do Auth.
+
+## Fase 2: Modelagem de Dados (Supabase SQL)
+
+Copie e rode este script no SQL Editor do Supabase:
+
+```sql
+-- Habilitar extensão de UUID
+create extension if not exists "uuid-ossp";
+
+-- Tabela de Itinerários (Dia de trabalho)
+create table itineraries (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) not null,
+  date date default current_date not null,
+  status text check (status in ('active', 'completed')) default 'active',
+  total_earnings numeric(10, 2) default 0.00,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabela de Paradas (Stops)
+create table stops (
+  id uuid default uuid_generate_v4() primary key,
+  itinerary_id uuid references itineraries(id) on delete cascade not null,
+  fixed_identifier text not null, -- O número escrito no pacote (ex: "1", "15")
+  address_full text not null,
+  latitude double precision not null,
+  longitude double precision not null,
+  sequence_order integer not null, -- Ordem otimizada (1, 2, 3...)
+  status text check (status in ('pending', 'current', 'delivered', 'failed')) default 'pending',
+  delivery_time timestamp with time zone,
+  notes text,
+  created_at timestamp with time zone default now()
+);
+
+-- Tabela de Cache Financeiro (Resumo)
+create table financial_summaries (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) not null,
+  period_start date not null,
+  period_end date not null,
+  total_deliveries integer default 0,
+  total_amount numeric(10, 2) default 0.00,
+  bonus_applied boolean default false,
+  generated_at timestamp with time zone default now()
+);
+
+-- Índices para performance
+create index idx_stops_itinerary on stops(itinerary_id);
+create index idx_stops_status on stops(status);
+Fase 3: Backend (tRPC & Mapbox Integration)
+Definição dos Procedimentos (Pseudo-código tRPC)
+TypeScript
+
+// router/stops.ts
+export const stopsRouter = router({
+  // 1. Adicionar Parada
+  addStop: protectedProcedure
+    .input(z.object({ 
+      address: z.string(), 
+      itineraryId: z.string() 
+    }))
+    .mutation(async ({ input, ctx }) => {
+      // 1. Chamar Mapbox Geocoding V6 para pegar Lat/Long
+      // 2. Gerar next fixed_identifier (Count + 1)
+      // 3. Insert no Supabase
+    }),
+
+  // 2. Otimizar Rota (Core)
+  optimizeRoute: protectedProcedure
+    .input(z.object({ itineraryId: z.string(), currentLat: z.number(), currentLng: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      // 1. Buscar todas as paradas 'pending' do itinerário
+      // 2. Montar payload para Mapbox Optimization API
+      // 3. Receber array ordenado
+      // 4. ATUALIZAR apenas a coluna 'sequence_order' no banco
+      // IMPORTANTE: Não alterar o 'fixed_identifier'
+    }),
+
+  // 3. Atualizar Status (Financeiro Trigger)
+  updateStatus: protectedProcedure
+    .input(z.object({ stopId: z.string(), status: z.enum(['delivered', 'failed']) }))
+    .mutation(async ({ input, ctx }) => {
+      // 1. Update na tabela stops
+      // 2. Se 'delivered', recalcular earnings do itinerary
+      // 3. Verificar regra de Domingo (Is Sunday? > 50 stops?)
+      // 4. Update total_earnings
+    }),
+});
+Lógica de "Re-otimização"
+Quando o usuário pede para re-otimizar:
+
+O sistema filtra apenas paradas com status = 'pending'.
+
+A localização atual do usuário (GPS) é definida como o ponto de partida (start).
+
+A API retorna a nova ordem.
+
+O Backend atualiza o sequence_order no banco.
+
+O Frontend invalida a query e redesenha a linha (Directions API). Nota: O pacote marcado com caneta como "5" continua sendo o "5" na UI (Fixed ID), mas pode ser o 1º da nova lista.
+
+Fase 4: Frontend Components (React 19)
+AddressInput.tsx (Voz e Autocomplete)
+TypeScript
+
+import { useState } from 'react';
+import { Mic, Search } from 'lucide-react';
+
+export function AddressInput({ onSelectAddress }: { onSelectAddress: (addr: string) => void }) {
+  const [query, setQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  const startListening = () => {
+    // Verificação de compatibilidade
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Seu navegador não suporta entrada de voz.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'pt-BR';
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+      // Opcional: Trigger busca automática aqui
+    };
+
+    recognition.start();
+  };
+
+  // Implementar debounce para chamar Mapbox Geocoding ao digitar
+  
+  return (
+    <div className="relative w-full">
+      <input 
+        type="text" 
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Digite ou fale o endereço..."
+        className="w-full p-4 pl-10 pr-12 border rounded-lg shadow-sm"
+      />
+      <Search className="absolute left-3 top-4 w-5 h-5 text-gray-400" />
+      
+      <button 
+        onClick={startListening}
+        className={`absolute right-2 top-2 p-2 rounded-full transition-colors ${
+          isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-600'
+        }`}
+      >
+        <Mic className="w-5 h-5" />
+      </button>
+    </div>
+  );
+}
+RouteMap.tsx (Visualização com Cores)
+TypeScript
+
+import Map, { Marker, Source, Layer } from 'react-map-gl'; // Mapbox wrapper
+
+// Cores baseadas no Status
+const STATUS_COLORS = {
+  pending: '#3B82F6',   // Azul (Tailwind blue-500)
+  current: '#22C55E',   // Verde (Tailwind green-500) - A próxima
+  delivered: '#9CA3AF', // Cinza (Tailwind gray-400)
+  failed: '#EF4444',    // Vermelho (Tailwind red-500)
+};
+
+export function RouteMap({ stops, routeGeoJSON }) {
+  return (
+    <Map
+      initialViewState={{ longitude: -46.63, latitude: -23.55, zoom: 12 }}
+      mapStyle="mapbox://styles/mapbox/streets-v12"
+      mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+    >
+      {/* Linha da Rota */}
+      {routeGeoJSON && (
+        <Source id="route" type="geojson" data={routeGeoJSON}>
+          <Layer
+            id="route-line"
+            type="line"
+            paint={{ 'line-color': '#3B82F6', 'line-width': 4 }}
+          />
+        </Source>
+      )}
+
+      {/* Marcadores */}
+      {stops.map((stop) => (
+        <Marker 
+          key={stop.id} 
+          longitude={stop.longitude} 
+          latitude={stop.latitude}
+        >
+          <div 
+            className="flex items-center justify-center w-8 h-8 rounded-full text-white font-bold shadow-lg border-2 border-white"
+            style={{ backgroundColor: STATUS_COLORS[stop.status] }}
+          >
+            {stop.fixed_identifier}
+          </div>
+        </Marker>
+      ))}
+    </Map>
+  );
+}
+Fase 5: Integração Financeira e PDF
+Criar hook useEarnings que subscreve às mudanças na tabela itineraries.
+
+Implementar jsPDF ou react-pdf para gerar o relatório quinzenal buscando dados de financial_summaries.
+
+
+---
+
+### design-guidelines.md
+
+```markdown
+# Diretrizes de Design & UX: RotaCerta
+
+## 1. Identidade Visual
+* **Estilo:** Utilitário, Limpo, Alto Contraste (para uso sob luz solar).
+* **Fonte:** Inter ou Roboto (Padrão Shadcn).
+
+## 2. Paleta de Cores (Semântica)
+O uso de cores é funcional, não estético.
+* **🔵 Azul (Primary):** Ações principais, Rotas, Paradas pendentes.
+* **🟢 Verde (Success):** Parada atual (foco), Dinheiro/Lucro, Confirmação de entrega.
+* **⚪ Cinza (Neutral):** Paradas concluídas (diminuir carga cognitiva), textos secundários.
+* **🔴 Vermelho (Destructive):** Falha na entrega, Erros, Botão de cancelar.
+
+## 3. UX para Entregadores (Mobile First)
+* **Botões Grandes:** Zonas de toque de min 48px (facilitar clique com luvas ou movimento).
+* **Feedback de Voz:** Ao ditar endereço, mostrar visualmente a onda sonora ou texto sendo digitado em tempo real.
+* **Modo Foco:** Durante a navegação, ocultar menus desnecessários. Mostrar apenas: Próxima Parada + Botão Waze + Botões de Status (Entregue/Falhou).
+
+## 4. Componentes Chave (Shadcn/ui)
+* `Card`: Para exibir detalhes de cada parada na lista.
+* `Button`: Variantes `default`, `destructive` e `outline` para ações de rota.
+* `Drawer` (Mobile): Para detalhes da parada sem sair do mapa.
+* `Toast`: Para confirmar "Entrega registrada + R$ 2,80".
+app-flow-pages-and-roles.md
+Markdown
+
+# Fluxo, Páginas e Papéis: RotaCerta
+
+## 1. Papéis de Usuário
+* **Entregador (User):** Único papel no MVP. Acesso total aos seus próprios dados.
+
+## 2. Estrutura de Páginas
+
+### A. Autenticação
+* `/login`: Login via Magic Link ou Google (Supabase Auth).
+
+### B. Fluxo Principal (Dia a Dia)
+1.  **Home / Setup de Rota** (`/app/plan`)
+    * Botão grande: "Novo Itinerário".
+    * Lista de endereços vazia.
+    * Input fixo no rodapé (Texto + Microfone).
+    * Ação: Adicionar endereços -> Clicar "Otimizar Rota".
+
+2.  **Modo Navegação** (`/app/drive`)
+    * **Tela Dividida (ou Mapa Full com Card Flutuante):**
+        * Mapa com linha azul e pinos.
+        * Card da "Parada Atual" (Verde).
+    * **Ações no Card:**
+        * Botão "Navegar" (Abre Waze/Gmaps).
+        * Botão "Entregue" (Muda status -> Cinza -> Toca som de caixa registradora -> Soma R$ 2,80).
+        * Botão "Falhou".
+    * **Menu Flutuante:** "Re-otimizar" (caso pule uma parada).
+
+### C. Gestão Financeira (`/app/finance`)
+* **Dashboard:**
+    * Ganhos Hoje (Barra de progresso da meta).
+    * Ganhos Quinzenais.
+    * Indicador de "Bônus de Domingo" (Ativo/Inativo).
+* **Histórico:** Lista de dias passados.
+* **Exportar:** Botão "Gerar Relatório PDF".
+
+## 3. Fluxo de Navegação Detalhado (Happy Path)
+1.  Abre o app -> Login automático.
+2.  Cria rota -> Dita 50 endereços (Voz).
+3.  Clica "Otimizar".
+4.  App numera os pacotes na tela (1 a 50). Entregador escreve nos pacotes físicos.
+5.  Entregador clica "Iniciar Rota".
+6.  App foca no Ponto 1 (Verde).
+7.  Entregador clica "Navegar" -> Vai pro Waze -> Faz entrega -> Volta pro App.
+8.  Clica "Confirmar Entrega".
+9.  Ponto 1 vira Cinza. Ponto 2 vira Verde. Saldo atualiza (+R$ 2,80).
+10. Repete até o fim.

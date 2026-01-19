@@ -1,0 +1,242 @@
+Relatório de APIs Mapbox para Sistema
+de Itinerário
+Autor: Manus AI
+Data: 18 de janeiro de 2026
+1. Introdução
+Este relatório apresenta uma análise técnica das APIs da plataforma Mapbox
+necessárias para desenvolver um sistema de gerenciamento de itinerários com
+múltiplas paradas. O documento aborda as APIs essenciais, suas funcionalidades
+principais, limites de taxa e casos de uso específicos para a aplicação.
+2. APIs Essenciais
+2.1 Mapbox Geocoding API
+Versão: v6 (mais recente)
+Função Principal: Converter endereços em coordenadas geográficas e vice-versa.
+Endpoint Base:
+https://api.mapbox.com/search/geocode/v6/
+Funcionalidades:
+Forward Geocoding: Transforma texto de endereço em coordenadas (latitude,
+longitude)
+Reverse Geocoding: Converte coordenadas em endereços legíveis
+Batch Geocoding: Processa até 1.000 endereços em uma única requisição
+Structured Input: Permite consultas separadas por componentes (rua, número,
+cidade, estado)
+Smart Address Match: Fornece indicador de precisão da correspondência
+(match_code)
+Rate Limits:
+1.000 requisições por minuto
+Sem limite de coordenadas por requisição
+Uso no Sistema de Itinerário:
+Buscar e validar endereços inseridos pelo usuário
+Converter coordenadas GPS em endereços legíveis para exibição
+Processar múltiplos endereços de paradas em lote
+Exemplo de Requisição:
+GET https://api.mapbox.com/search/geocode/v6/forward?
+q=Avenida+Bernardino+de+Campos,+551,+Santos&access_token=YOUR_TOKEN
+2.2 Mapbox Directions API
+Versão: v5
+Função Principal: Calcular rotas otimizadas e gerar instruções de navegação passo a
+passo.
+Endpoint Base:
+GET https://api.mapbox.com/directions/v5/{profile}/{coordinates}
+Perfis de Roteamento Disponíveis:
+Perfil Descrição
+Máx.
+Coordenadas
+mapbox/drivingtraffic
+Roteamento automotivo com tráfego em
+tempo real
+25
+mapbox/driving Roteamento automotivo rápido 25
+mapbox/walking Roteamento para pedestres 25
+mapbox/cycling Roteamento para bicicletas 25
+Funcionalidades Principais:
+Cálculo de rotas com até 25 coordenadas
+Retorna geometria da rota (GeoJSON)
+Calcula duração estimada em segundos
+Calcula distância total em metros
+Gera instruções turn-by-turn detalhadas
+Suporta rotas alternativas
+Fornece informações de tráfego em tempo real (perfil traffic)
+Instruções de voz e visuais (banner)
+Suporte a roteamento de veículos elétricos com paradas de carregamento
+Rate Limits:
+300 requisições por minuto
+25 coordenadas por requisição
+Parâmetros Opcionais Importantes:
+alternatives : Retorna rotas alternativas (até 2)
+steps : Instruções detalhadas passo a passo
+geometries : Formato da geometria (geojson, polyline, polyline6)
+overview : Nível de detalhe (full, simplified, false)
+voice_instructions : Instruções de voz
+banner_instructions : Instruções visuais
+exclude : Excluir tipos de estrada (motorway, toll, ferry, unpaved)
+annotations : Metadados adicionais (distance, duration, speed, congestion)
+Uso no Sistema de Itinerário:
+Calcular a rota entre todas as paradas do itinerário
+Obter tempo estimado de viagem total
+Obter distância total do percurso
+Gerar instruções de navegação para o motorista
+Desenhar a rota no mapa (usando a geometria retornada)
+Exemplo de Requisição:
+GET
+https://api.mapbox.com/directions/v5/mapbox/driving/-23.9,−46.3;-23.95,-46.35?
+steps=true&geometries=geojson&access_token=YOUR_TOKEN
+2.3 Mapbox Optimization API
+Versão: v2 (Beta) ou v1 (Estável)
+Função Principal: Otimizar a ordem das paradas para minimizar tempo de viagem ou
+distância.
+Endpoint Base:
+v2 (Beta): POST https://api.mapbox.com/optimized-trips/v2
+v1: GET https://api.mapbox.com/optimizedtrips/v1/{profile}/{coordinates}
+Funcionalidades Principais:
+Otimiza a ordem de até 12 paradas (v1) ou mais (v2)
+Resolve o “Problema do Caixeiro Viajante” (TSP)
+Considera janelas de tempo para cada parada
+Considera capacidade de veículos
+Retorna rota otimizada com ordem ideal das paradas
+Calcula ETA (tempo estimado de chegada) para cada parada
+Minimiza tempo total de viagem
+Rate Limits:
+300 requisições por minuto
+12 coordenadas por requisição (v1)
+Fluxo de Funcionamento (v2):
+1. Enviar requisição POST com problema de roteamento
+2. Receber ID da requisição
+3. Fazer polling com GET para obter resultado quando pronto
+Uso no Sistema de Itinerário:
+Reorganizar automaticamente as paradas na ordem mais eficiente
+Calcular horários de chegada em cada parada
+Minimizar custos operacionais (combustível, tempo)
+Melhorar a experiência do cliente com rotas mais rápidas
+Exemplo de Requisição (v1):
+GET https://api.mapbox.com/optimizedtrips/v1/mapbox/driving/-23.9,-46.3;-23.95,-46.35;-23.92,-46.40?
+access_token=YOUR_TOKEN
+2.4 Mapbox GL JS (Biblioteca JavaScript)
+Versão: v3.x
+Função Principal: Renderizar mapas interativos e dados geoespaciais em aplicações
+web.
+Instalação:
+npm install mapbox-gl
+Funcionalidades Principais:
+Exibir mapas interativos com alta performance (WebGL)
+Adicionar marcadores personalizados e numerados
+Desenhar rotas (polylines) no mapa
+Suporte a múltiplos estilos de mapa
+Controles de zoom, rotação e inclinação
+Suporte a GeoJSON para dados geoespaciais
+Eventos de interação (click, hover, etc.)
+Camadas customizáveis
+Animações suaves
+Uso no Sistema de Itinerário:
+Exibir o mapa base com as ruas e localidades
+Mostrar marcadores numerados para cada parada
+Desenhar a linha da rota otimizada
+Permitir interação do usuário (zoom, pan, click)
+Exibir popups com informações das paradas
+Atualizar mapa em tempo real conforme rotas mudam
+Exemplo de Uso:
+import mapboxgl from 'mapbox-gl';
+mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+const map = new mapboxgl.Map({
+container: 'map',
+style: 'mapbox://styles/mapbox/streets-v12',
+center: [-46.3, -23.9],
+zoom: 12
+});
+// Adicionar marcador
+new mapboxgl.Marker()
+.setLngLat([-46.3, -23.9])
+.addTo(map);
+3. APIs Recomendadas (Funcionalidades Adicionais)
+3.1 Mapbox Matrix API
+Versão: v1
+Função Principal: Calcular tempos de viagem entre múltiplos pontos em uma única
+chamada.
+Endpoint Base:
+https://api.mapbox.com/directions-matrix/v1/{profile}/{coordinates}
+Funcionalidades:
+Retorna matriz de tempos entre todos os pontos
+Até 25 coordenadas (perfis driving/walking/cycling)
+Até 10 coordenadas (perfil driving-traffic)
+Retorna duração em segundos e distância em metros
+Rate Limits: 60 requisições por minuto (driving/walking/cycling)
+Uso: Pré-calcular tempos entre todas as paradas para análise de viabilidade.
+3.2 Mapbox Search Box API
+Versão: v1
+Função Principal: Fornecer interface de busca com autocompletar e sugestões.
+Endpoint Base:
+https://api.mapbox.com/search/searchbox/v1/
+Funcionalidades:
+Sugestões de endereços em tempo real
+Busca de pontos de interesse
+Busca por categoria
+Busca por proximidade
+Uso: Melhorar experiência do usuário na adição de novos destinos com
+autocompletar.
+3.3 Mapbox Static Images API
+Versão: v1
+Função Principal: Gerar imagens estáticas de mapas.
+Endpoint Base:
+https://api.mapbox.com/styles/v1/{username}/{style_id}/static/
+Funcionalidades:
+Gerar imagens PNG de mapas
+Adicionar marcadores e rotas
+Adicionar overlays GeoJSON
+Diferentes tamanhos e resoluções
+Rate Limits: 1.250 requisições por minuto
+Uso: Gerar thumbnails de rotas e compartilhar imagens de itinerários.
+4. Arquitetura Recomendada
+Fluxo de Integração
+1. ENTRADA DE DADOS
+↓
+Usuário adiciona endereços
+↓
+Geocoding API: Converte em coordenadas
+2. OTIMIZAÇÃO
+↓
+Optimization API: Ordena paradas eficientemente
+↓
+Calcula horários de chegada (ETA)
+3. CÁLCULO DE ROTA
+↓
+Directions API: Calcula rota detalhada
+↓
+Obtém geometria, instruções e tempos
+4. VISUALIZAÇÃO
+↓
+Mapbox GL JS: Renderiza mapa
+↓
+Adiciona marcadores e desenha rota
+5. EXIBIÇÃO
+↓
+Mostra informações consolidadas:
+- Tempo total
+- Distância total
+- Horários por parada
+- Instruções de navegação
+5. Limites e Taxas
+API Rate Limit Coords/Req Custo*
+Geocoding API 1.000 req/min N/A Gratuito até 100k/mês
+Directions API 300 req/min 25 Gratuito até 100k/mês
+Optimization API 300 req/min 12 Gratuito até 100k/mês
+Matrix API 60 req/min 25 Gratuito até 100k/mês
+Mapbox GL JS N/A N/A Gratuito até 50k carregamentos/mês
+*Valores aproximados - consultar documentação oficial para preços atualizados
+6. Conclusão
+A plataforma Mapbox oferece um conjunto robusto e completo de APIs para construir
+um sistema profissional de gerenciamento de itinerários. As quatro APIs essenciais
+(Geocoding, Directions, Optimization e Mapbox GL JS) formam a base funcional
+necessária para replicar e superar as funcionalidades observadas na aplicação de
+referência.
+A integração dessas APIs permite criar uma solução de nível empresarial com
+capacidades avançadas de otimização de rotas, visualização interativa de mapas e
+gerenciamento eficiente de múltiplas paradas.
+7. Referências
+Mapbox Geocoding API: https://docs.mapbox.com/api/search/geocoding/
+Mapbox Directions API: https://docs.mapbox.com/api/navigation/directions/
+Mapbox Optimization API:
+https://docs.mapbox.com/api/navigation/optimization/
+Mapbox GL JS: https://docs.mapbox.com/mapbox-gl-js/api/
+Mapbox Matrix API: https://docs.mapbox.com/api/navigation/matrix/
+Mapbox Static Images API: https://docs.mapbox.com/api/maps/static-images/
+Mapbox API Docs: https://docs.mapbox.com/api/guides/
