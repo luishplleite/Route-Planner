@@ -152,7 +152,36 @@ export default function DrivePage() {
           } else {
             console.warn("[DrivePage] No geometry returned from optimization. Data keys:", Object.keys(data));
           }
-          toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
+
+          // Show detailed optimization summary in a toast or dialog
+          if (data.stops && data.stops.length > 0) {
+            const sequence = data.stops
+              .sort((a: any, b: any) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0))
+              .map((s: any) => `📦 ${s.fixedIdentifier} (Para ${s.sequenceOrder})`)
+              .join('\n');
+            
+            toast({ 
+              title: "Rota Otimizada", 
+              description: (
+                <div className="mt-2 text-xs space-y-1">
+                  <p className="font-bold border-b pb-1 mb-1">Nova Sequência:</p>
+                  {data.stops
+                    .sort((a: any, b: any) => (a.sequenceOrder || 0) - (b.sequenceOrder || 0))
+                    .map((s: any) => (
+                      <div key={s.id} className="flex justify-between items-center py-0.5 border-b border-white/10 last:border-0">
+                        <span className="font-semibold text-blue-400">#{s.sequenceOrder}</span>
+                        <span className="flex-1 px-2 truncate">ID: {s.fixedIdentifier}</span>
+                        <span className="text-[10px] opacity-70">Pendente</span>
+                      </div>
+                    ))
+                  }
+                </div>
+              ),
+              duration: 10000 
+            });
+          } else {
+            toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
+          }
         },
         onError: (error: any) => {
           console.error("[DrivePage] Optimization error:", error);
