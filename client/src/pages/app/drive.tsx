@@ -203,13 +203,13 @@ export default function DrivePage() {
                 <Marker key={stop.id} longitude={Number(stop.longitude)} latitude={Number(stop.latitude)} anchor="bottom">
                   <div className="relative group">
                     <div className={`
-                      h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white shadow-md
-                      ${stop.status === 'delivered' ? 'bg-green-500' : stop.status === 'failed' ? 'bg-red-500' : 'bg-primary'}
+                      h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-white shadow-md
+                      ${stop.status === 'delivered' ? 'bg-green-500' : stop.status === 'failed' ? 'bg-red-500' : 'bg-blue-600'}
                     `}>
                       {stop.sequenceOrder}
                     </div>
                     {/* Fixed identifier (Package ID) badge */}
-                    <div className="absolute -top-2 -right-2 bg-slate-800 text-[10px] text-white px-1 rounded border border-white min-w-[16px] text-center">
+                    <div className="absolute -top-2 -right-2 bg-slate-800 text-[10px] text-white px-1 rounded border border-white min-w-[16px] h-[16px] flex items-center justify-center text-center font-medium shadow-sm">
                       {stop.fixedIdentifier}
                     </div>
                   </div>

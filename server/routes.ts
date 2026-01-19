@@ -218,11 +218,13 @@ export async function registerRoutes(
       // index 1..N are our stops
       const updates = [];
       for (let i = 1; i < optimizationOrder.length; i++) {
-        const stopIndex = optimizationOrder[i] - 1;
-        const stop = stopsToOptimize[stopIndex];
-        // New sequence order starts after any already completed stops
-        const completedCount = currentStops.length - pendingStops.length;
-        updates.push(storage.updateStopSequence(stop.id, completedCount + i));
+        const stopIndexInInput = optimizationOrder[i] - 1;
+        const stop = stopsToOptimize[stopIndexInInput];
+        if (stop) {
+          // New sequence order starts after any already completed stops
+          const completedCount = currentStops.length - pendingStops.length;
+          updates.push(storage.updateStopSequence(stop.id, completedCount + i));
+        }
       }
 
       await Promise.all(updates);
