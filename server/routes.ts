@@ -135,20 +135,68 @@ export async function registerRoutes(
   });
 
   app.post(api.stops.optimize.path, isAuthenticated, async (req, res) => {
-     // Placeholder for Mapbox Optimization API
-     // Since we might not have a key, we'll just re-return the list or shuffle for demo if needed.
-     // In a real app, we'd fetch optimization API here.
-     
-     const itineraryId = req.params.id;
-     const currentStops = await storage.getStopsByItinerary(itineraryId);
-     
-     // Mock Optimization: Sort by sequenceOrder (no-op)
-     // If we had Mapbox Key:
-     // 1. Construct payload
-     // 2. Call https://api.mapbox.com/optimized-trips/v1/...
-     // 3. Update sequenceOrder in DB based on result
-     
-     res.json(currentStops);
+    const itineraryId = req.params.id;
+    const { currentLatitude, currentLongitude } = req.body;
+
+    const currentStops = await storage.getStopsByItinerary(itineraryId);
+    const pendingStops = currentStops.filter(s => s.status === 'pending' || s.status === 'current');
+
+    if (pendingStops.length === 0) {
+      return res.json(currentStops);
+    }
+
+    const token = process.env.VITE_MAPBOX_TOKEN || process.env.MAPBOX_PUBLIC_KEY;
+    if (!token) {
+      console.error("Mapbox token missing for optimization");
+      return res.status(500).json({ message: "Configuração do Mapbox ausente" });
+    }
+
+    try {
+      // 1. Prepare coordinates string: start;stop1;stop2...
+      // Optimization API v1 max 12 stops.
+      const stopsToOptimize = pendingStops.slice(0, 11); // 1 start + 11 stops = 12
+      const coordinates = [
+        `${currentLongitude},${currentLatitude}`,
+        ...stopsToOptimize.map(s => `${s.longitude},${s.latitude}`)
+      ].join(';');
+
+      const url = `https://api.mapbox.com/optimized-trips/v1/mapbox/driving-traffic/${coordinates}?overview=full&geometries=geojson&access_token=${token}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.code !== 'Ok') {
+        throw new Error(`Mapbox Error: ${data.code}`);
+      }
+
+      const optimizationOrder = data.trips[0].waypoint_indices;
+      // optimizationOrder[0] is always 0 (the start point)
+      // The rest are indices of the stopsToOptimize array + 1
+      
+      // 2. Update sequenceOrder in database
+      // waypoint_indices mapping: index 0 is our current position
+      // index 1..N are our stops
+      const updates = [];
+      for (let i = 1; i < optimizationOrder.length; i++) {
+        const stopIndex = optimizationOrder[i] - 1;
+        const stop = stopsToOptimize[stopIndex];
+        // New sequence order starts after any already completed stops
+        const completedCount = currentStops.length - pendingStops.length;
+        updates.push(storage.updateStopSequence(stop.id, completedCount + i));
+      }
+
+      await Promise.all(updates);
+
+      // 3. Return updated list and geometry
+      const updatedStops = await storage.getStopsByItinerary(itineraryId);
+      res.json({ 
+        stops: updatedStops,
+        geometry: data.trips[0].geometry
+      });
+    } catch (error: any) {
+      console.error("Optimization failed:", error);
+      res.status(500).json({ message: "Falha na otimização: " + error.message });
+    }
   });
 
   // Finance

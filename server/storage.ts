@@ -109,6 +109,15 @@ export class DatabaseStorage extends authStorage.constructor implements IStorage
     await db.update(stops).set({ sequenceOrder: order }).where(eq(stops.id, id));
   }
 
+  async updateStopSequence(id: string, sequenceOrder: number): Promise<Stop> {
+    const [stop] = await db.update(stops)
+      .set({ sequenceOrder })
+      .where(eq(stops.id, id))
+      .returning();
+    if (!stop) throw new Error("Stop not found");
+    return stop;
+  }
+
   // Finance
   async getFinancialSummary(userId: string, start: string, end: string): Promise<{ totalDeliveries: number, totalEarnings: number }> {
     // This is a simplified calculation directly from itineraries for now

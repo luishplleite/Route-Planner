@@ -9,6 +9,16 @@ import { Stop } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import ReactMapGL, { Marker, Source, Layer } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Fallback if env not set
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || (window as any).VITE_MAPBOX_TOKEN || "";
@@ -29,6 +39,8 @@ export default function DrivePage() {
   });
 
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [showOptimizeDialog, setShowOptimizeDialog] = useState(false);
+  const [routeData, setRouteData] = useState<any>(null);
 
   // Get user location on mount
   useEffect(() => {
@@ -104,7 +116,27 @@ export default function DrivePage() {
       toast({ title: "Localização necessária", description: "Por favor, habilite a localização para otimizar a rota a partir da sua posição atual.", variant: "destructive" });
       return;
     }
-    optimize({ currentLatitude: userLocation.lat, currentLongitude: userLocation.lng });
+    setShowOptimizeDialog(true);
+  };
+
+  const confirmOptimize = () => {
+    if (!userLocation) return;
+    optimize(
+      { currentLatitude: userLocation.lat, currentLongitude: userLocation.lng },
+      {
+        onSuccess: (data: any) => {
+          if (data.geometry) {
+            setRouteData({
+              type: 'Feature',
+              properties: {},
+              geometry: data.geometry
+            });
+          }
+          toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
+        }
+      }
+    );
+    setShowOptimizeDialog(false);
   };
 
   return (
@@ -126,14 +158,32 @@ export default function DrivePage() {
                 </Marker>
               )}
               
+              {/* Route Line */}
+              {routeData && (
+                <Source id="route" type="geojson" data={routeData}>
+                  <Layer
+                    id="route-layer"
+                    type="line"
+                    layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+                    paint={{ 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.75 }}
+                  />
+                </Source>
+              )}
+
               {/* Stops Markers */}
               {stops.map((stop) => (
                 <Marker key={stop.id} longitude={Number(stop.longitude)} latitude={Number(stop.latitude)} anchor="bottom">
-                  <div className={`
-                    h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white shadow-md
-                    ${stop.status === 'delivered' ? 'bg-green-500' : stop.status === 'failed' ? 'bg-red-500' : 'bg-primary'}
-                  `}>
-                    {stop.fixedIdentifier}
+                  <div className="relative group">
+                    <div className={`
+                      h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-xs border-2 border-white shadow-md
+                      ${stop.status === 'delivered' ? 'bg-green-500' : stop.status === 'failed' ? 'bg-red-500' : 'bg-primary'}
+                    `}>
+                      {stop.sequenceOrder}
+                    </div>
+                    {/* Fixed identifier (Package ID) badge */}
+                    <div className="absolute -top-2 -right-2 bg-slate-800 text-[10px] text-white px-1 rounded border border-white min-w-[16px] text-center">
+                      {stop.fixedIdentifier}
+                    </div>
                   </div>
                 </Marker>
               ))}
@@ -153,6 +203,21 @@ export default function DrivePage() {
             {isOptimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Route className="w-4 h-4 mr-2" /> Otimizar</>}
           </Button>
         </div>
+
+        <AlertDialog open={showOptimizeDialog} onOpenChange={setShowOptimizeDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Otimizar Rota?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Isso irá reorganizar as paradas pendentes para encontrar o caminho mais rápido a partir da sua localização atual.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmOptimize}>Otimizar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Input Section */}
         <div className="space-y-2">
