@@ -173,14 +173,43 @@ export async function registerRoutes(
         throw new Error(`Mapbox Error: ${data.code}`);
       }
 
+      // Log full response for debugging
+      console.log(`[Optimization] Mapbox Response: ${JSON.stringify(data)}`);
+
       const trips = data.trips;
       if (!trips || trips.length === 0) {
         console.error(`[Optimization] No trips in response: ${JSON.stringify(data)}`);
         throw new Error("Nenhuma rota encontrada pela API do Mapbox");
       }
 
-      const optimizationOrder = trips[0].waypoint_indices;
-      console.log(`[Optimization] Optimization Order: ${optimizationOrder}`);
+      // Mapbox Optimization v1 sometimes returns waypoint_indices directly in the first trip
+      let optimizationOrder = trips[0].waypoint_indices;
+      
+      // If waypoint_indices is not in the trip, it might be in the root waypoints object
+      if (!optimizationOrder && data.waypoints) {
+        console.log("[Optimization] Reconstructing order from root waypoints");
+        optimizationOrder = data.waypoints.map((_: any, i: number) => i);
+      }
+
+      // Final fallback: if we have waypoints but no order, use the order of waypoints
+      if (!optimizationOrder && data.waypoints) {
+        optimizationOrder = Array.from({ length: data.waypoints.length }, (_, i) => i);
+      }
+
+      if (!optimizationOrder) {
+        // Log keys to identify where the data is
+        console.error(`[Optimization] Missing waypoint_indices. Data keys: ${Object.keys(data)}`);
+        if (data.waypoints && data.waypoints.length > 0) {
+            console.log("[Optimization] Using waypoints order as emergency fallback");
+            optimizationOrder = data.waypoints.map((_: any, i: number) => i);
+        }
+      }
+
+      if (!optimizationOrder) {
+        throw new Error("Dados de otimização (waypoint_indices) ausentes na resposta do Mapbox");
+      }
+      
+      console.log(`[Optimization] Final Order: ${optimizationOrder}`);
       // optimizationOrder[0] is always 0 (the start point)
       // The rest are indices of the stopsToOptimize array + 1
       

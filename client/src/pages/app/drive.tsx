@@ -127,14 +127,19 @@ export default function DrivePage() {
       {
         onSuccess: (data: any) => {
           console.log("[DrivePage] Optimization success data:", data);
-          if (data.geometry) {
+          
+          // Geometry can be at data.geometry or inside the first trip
+          const geometry = data.geometry || (data.trips && data.trips[0] && data.trips[0].geometry);
+          
+          if (geometry) {
+            console.log("[DrivePage] Setting route geometry");
             setRouteData({
               type: 'Feature',
               properties: {},
-              geometry: data.geometry
+              geometry: geometry
             });
           } else {
-            console.warn("[DrivePage] No geometry returned from optimization");
+            console.warn("[DrivePage] No geometry returned from optimization. Data:", data);
           }
           toast({ title: "Rota Otimizada", description: "As paradas foram reordenadas para a rota mais rápida." });
         },
@@ -168,12 +173,16 @@ export default function DrivePage() {
               
               {/* Route Line */}
               {routeData && (
-                <Source id="route" type="geojson" data={routeData}>
+                <Source id="route-source" type="geojson" data={routeData}>
                   <Layer
                     id="route-layer"
                     type="line"
                     layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-                    paint={{ 'line-color': '#3b82f6', 'line-width': 4, 'line-opacity': 0.75 }}
+                    paint={{ 
+                      'line-color': '#3b82f6', 
+                      'line-width': 5, 
+                      'line-opacity': 0.8 
+                    }}
                   />
                 </Source>
               )}
