@@ -40,3 +40,8 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_log_in_with_replit:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_MAPBOX_TOKEN = "pk.eyJ1IjoibGhwbCIsImEiOiJjbWN6bHlubGIweWl1MmpvajJjNDZsMTB1In0.VknoAZV_yynQiYi4nR3JjQ"
