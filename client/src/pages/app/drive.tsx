@@ -11,7 +11,7 @@ import ReactMapGL, { Marker, Source, Layer } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Fallback if env not set
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || "";
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || (window as any).VITE_MAPBOX_TOKEN || "";
 
 export default function DrivePage() {
   const { data: activeMeta, isLoading: isLoadingMeta } = useActiveItinerary();
